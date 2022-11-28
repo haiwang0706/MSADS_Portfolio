@@ -1,1 +1,1 @@
-# MSADS_Portfolio
+# Syracuse University, M.S., Applied Data Science
