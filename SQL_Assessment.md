@@ -1,4 +1,3 @@
-
 --Question # 0:
 SELECT * FROM marketing_data Limit 2;​
 
@@ -26,7 +25,7 @@ WITH temp AS(
 SELECT date,geo,brand_id,revenue,click_rate
 FROM temp
 Order by click_rate DESC
--- I consider the clickrate which represent 'number of click/impression' and order by Descending, it can show top brand in different states of US.The higher the RTC, the more efficient store which is CA brand_id 1. Also, we can set the limited to ignore the low clickrate
+-- I consider the clickrate which represent 'number of click/impression' and order by Descending, it can show top brand in different states of US.The higher the click rate the more efficient store which is CA brand_id 1. Also, we can set the limited to ignore the low clickrate
 
 --Question # 5:
 WITH temp AS(
