@@ -2,30 +2,63 @@
 SELECT * FROM marketing_data Limit 2;​
 
 --Question # 1:
-SELECT geo, sum(clicks)
+SELECT geo, sum(clicks) AS total_clicks
 From marketing_data
 Group by geo;
 
 --Question # 2:
-SELECT store_location, sum(revenue)
+SELECT store_location, sum(revenue) AS total_revenue
 FROM store_revenue 
 Group by store_location;
 
 --Question # 3:
-SELECT m.date,  m.geo, m.impressions, m.clicks, s.revenue
-FROM marketing_data m  FULL OUTER JOIN store_revenue s  ON m.date = s.date and 'United States-' || m.geo = s.store_location;
+
+SELECT m.date, m.geo, m.impressions, m.clicks, sum(s.revenue) as total_revenue
+FROM marketing_data m 
+FULL OUTER JOIN store_revenue s 
+ON m.date = s.date and m.geo = RIGHT(s.store_location,2)
+WHERE s.revenue is not null
+GROUP BY m.date, m.geo,m.impressions,m.clicks
+ORDER BY m.date, m.geo
 
 --Question # 4:
+
 WITH temp AS(
-    Select *, Round(m.clicks*100/m.impressions,2) as clickrate
-    FROM marketing_data m FULL OUTER JOIN store_revenue s ON m.date = s.date and 'United States-' || m.geo = s.store_location
-    GROUP BY m.date,m.geo
+	Select m.geo, s.revenue, s.brand_id,m.clicks,m.impressions
+	FROM marketing_data m 
+	FULL OUTER JOIN store_revenue s 
+	ON m.date = s.date and m.geo = RIGHT(s.store_location,2)
+	WHERE geo IS NOT null
+	GROUP BY  m.geo,m.impressions, m.clicks,s.revenue,s.brand_id
 )
 
-SELECT date,geo,brand_id,revenue,click_rate
-FROM temp
-Order by click_rate DESC
--- I consider the clickrate which represent 'number of click/impression' and order by Descending, it can show top brand in different states of US.The higher the click rate the more efficient store which is CA brand_id 1. Also, we can set the limited to ignore the low clickrate
+SELECT 
+geo,brand_id,sum(revenue) AS revenue,sum(clicks) AS total_clicks,sum(impressions) AS total_impressions,
+ROUND(CAST((sum(clicks)*100/sum(impressions)) AS numeric),2) as Click_through_rate
+FROM temp 
+WHERE revenue IS NOT null
+GROUP by brand_id,geo
+Order by Click_through_rate  DESC,revenue DESC ;
+
+-- I consider the clickrate which represent 'number of click/impression' and order by Descending, it can show top brand in different states of US.The higher the click rate the more efficient store which is TX, brand_id 2 made more revenue than brand_id 1.
+
+WITH TEMP1 AS(
+	SELECT m.date, m.geo, m.impressions, m.clicks, sum(s.revenue) as total_revenue
+	FROM marketing_data m 
+	FULL OUTER JOIN store_revenue s 
+	ON m.date = s.date and m.geo = RIGHT(s.store_location,2)
+	GROUP BY m.date, m.geo,m.impressions,m.clicks
+	Having m.date is not null
+	ORDER BY m.date, m.geo)
+
+SELECT geo, sum(impressions) AS toatl_impressions,sum(clicks) AS total_clicks,sum(total_revenue) AS total_revenues,
+ROUND(CAST((sum(total_revenue)/sum(impressions)) AS numeric),2) AS revenue_per_impressions
+FROM TEMP1
+WHERE temp1.total_revenue IS NOT null
+GROUP BY geo
+Order by revenue_per_impressions  DESC;
+
+-- I consider the revenue per impressions which represent 'total_revenue/impression' and order by Descending, it can show top brand in different states of US.In this side, the higher revenue per impressions to indiciate the more efficient store which is CA.
 
 --Question # 5:
 WITH temp AS(
@@ -33,7 +66,7 @@ WITH temp AS(
     FROM store_revenue s 
     Group by store_location
 )
-Select sum_revenue
+Select *
 FROM temp
 Order by sum_revenue DESC
 Limit 10;
